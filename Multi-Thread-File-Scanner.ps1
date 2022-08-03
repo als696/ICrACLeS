@@ -17,13 +17,26 @@ $startPath = "X:\"
 # Define Fim Group to be tested
 $fimGroup = "res_"      #Write the Pim group as shown exactly in FIM
 
-# Configure output Synchronized HashTable (WIP, Unused Currently)
-$Configuration = [hashtable]::Synchronized(@{})
-$Configuration.FilePath = "Y:\Results\Temp\"
-$Configuration.CreatedFiles = @()
-
 #Define Number of Threads to use (ENSURE THIS IS CORRECT THERE ARE NO INTERNAL LIMITERS)
 $Maxthreads = 35
+
+$threadList = @()
+
+for($i = 10; $i -lt $Maxthreads+10; $i++)
+{
+    $threadList += "$i"
+}
+foreach($csvname in $threadList){
+    Set-Content -Path "C:\Users\als696\Documents\Temp\$csvname.csv" -Value $null
+}
+
+$csvnamelist = Get-ChildItem -Path "C:\Users\als696\Documents\Temp\" -file | Sort-Object -Property fullName
+
+# Configure output Synchronized HashTable (WIP, Unused Currently)
+$Configuration = [hashtable]::Synchronized(@{})
+$Configuration.Results = "C:\Users\als696\Documents\Results"
+$Configuration.CreatedFiles = $csvnamelist.fullname
+
 
 #------------------------------------------------------------
 #--------------Initialize Worker-bee Script Block------------
@@ -38,7 +51,7 @@ $GetACLerrors = {
 
     # Get all children items in the given directory
     $FolderChildren = Get-ChildItem $foldertoAnalyse -ErrorAction SilentlyContinue
-
+    $errorList = @()
     #$foldertoAnlyse | Write-Host
 
     # Checks if folder ACL's are accessible from current user 
@@ -58,11 +71,11 @@ $GetACLerrors = {
 
             # Checks if there were errors detected for each case:
             if ($null -ne $ErrorCheck_winsys){
-                "Accessible but there is no Win_sys_admins at,"+$childPath.FullName|Write-Host
+                $errorList += ("Accessible but there is no Win_sys_admins at,"+$childPath.FullName)
             }
 
             #if ($null -ne $ErrorCheck_fim){
-                #"Accessible but there is no FIM group found at,"+$childPath.FullName|Write-Host
+                #$errorList += ("Accessible but there is no FIM group found at,"+$childPath.FullName)
             #}
 
         }
@@ -70,8 +83,18 @@ $GetACLerrors = {
         # If There was an issue accessing these ACL's somehow...
         Catch{
             #TODO: Identify issues if possible
-            "Can't Access ACL's. Exception '"+$_+"' at path, "+$childPath.FullName| Write-Host
+            $errorList += ("Can't Access ACL's. Exception '"+$_+"' at path, "+$childPath.FullName)
         }
+    }
+
+    # Find Free CSV and write to it:
+    :loop Foreach($outPath in $Configuration.CreatedFiles){
+        Try{
+            Add-Content -Path $outPath -Value $errorList -ErrorAction Stop | Out-Null
+            #success!
+            break loop
+        }
+        catch{$null}
     }
 
 }
@@ -178,6 +201,16 @@ Start-Sleep -Seconds 1
 #------------------------------------------------------------
 #----------------------------Output--------------------------
 #------------------------------------------------------------
+
+#Coalate results from All CSV's
+$results = @()
+
+foreach($Path in $Configuration.CreatedFiles = $csvnamelist.fullname){
+    $results += Get-Content -Path $Path
+}
+
+$results | Out-File "C:\Users\als696\Documents\Results\Output.csv"
+
 
 #Write output time
 "Scan Complete..." | Write-Host
