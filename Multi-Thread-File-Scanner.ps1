@@ -12,7 +12,9 @@ Clear-Host
 #Start-Transcript -Path "C:\Users\als696\Documents\test-scan.csv"
 # Define Start location:
 # TODO: Implement recursive path entries for BAU Reduction
-$startPath = "X:\"
+$startLetter = "X"
+$startPath = $startLetter+":\"
+$ResultPath = "C:\Users\als696\Documents\Results\"+$startLetter+".csv"
 
 # Define Fim Group to be tested
 $fimGroup = "res_"      #Write the Pim group as shown exactly in FIM
@@ -34,7 +36,6 @@ $csvnamelist = Get-ChildItem -Path "C:\Users\als696\Documents\Temp\" -file | Sor
 
 # Configure output Synchronized HashTable (WIP, Unused Currently)
 $Configuration = [hashtable]::Synchronized(@{})
-$Configuration.Results = "C:\Users\als696\Documents\Results"
 $Configuration.CreatedFiles = $csvnamelist.fullname
 
 
@@ -185,11 +186,15 @@ forEach($folder in $foldertree){
     $Jobs.Add($JobObj) | Out-Null
 }
 
+$initialJobs = $jobs.Runspace.IsCompleted | Where-Object {$_ -contains $false}
 # Check for running Jobs and wait until all jobs are reported as complete.
 while ($Jobs.Runspace.IsCompleted -contains $false) {
-"Scan Still in progress..." |Write-Host
+$jobsremaining = $jobs.Runspace.IsCompleted | Where-Object {$_ -contains $false}
+"Scan Still in progress..."+[math]::Round((($initialJobs.count-$jobsremaining.count)/$initialJobs.count)*100)+"% Complete."|Write-Host
 Start-Sleep -Seconds 1
 }
+"Wrapping up..." |Write-Host
+Start-Sleep -Seconds 10
 
 #------------------------------------------------------------
 #------------------------Debugging Tools---------------------
@@ -204,12 +209,18 @@ Start-Sleep -Seconds 1
 
 #Coalate results from All CSV's
 $results = @()
+$enum_errors = @()
 
 foreach($Path in $Configuration.CreatedFiles = $csvnamelist.fullname){
-    $results += Get-Content -Path $Path
+    Try{
+        $results += Get-Content -Path $Path
+    }
+    Catch{
+        $enum_errors += $Path
+    }
 }
 
-$results | Out-File "C:\Users\als696\Documents\Results\Output.csv"
+$results | Set-Content $ResultPath
 
 
 #Write output time
