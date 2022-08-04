@@ -68,7 +68,7 @@ $GetACLerrors = {
 #------------------------------------------------------------
 #-----------------------Collect CSV List---------------------
 #------------------------------------------------------------
-$SharestoScan = Get-Content "C:\Users\als696\Documents\Input\Shares.csv"
+$SharestoScan = Get-Content "$PSScriptRoot\Input\Shares.csv"
 foreach($sharename in $SharestoScan){
 
     #------------------------------------------------------------
@@ -85,7 +85,7 @@ foreach($sharename in $SharestoScan){
     $resultname = $resultName[-1]
 
     #Define a path to save the results for each drive
-    $ResultPath = "C:\Users\als696\Documents\Results\"+$resultName+".csv"
+    $ResultPath = "$PSScriptRoot\Results\"+$resultName+".csv"
 
     # Define Fim Group to be tested
     $fimGroup = "res_"      #Write the Pim group as shown exactly in FIM
@@ -101,7 +101,7 @@ foreach($sharename in $SharestoScan){
         $threadList += "$i"
     }
     foreach($csvname in $threadList){
-        Set-Content -Path "C:\Users\als696\Documents\Temp\$csvname.csv" -Value $null
+        Set-Content -Path "$PSScriptRoot\Temp\$csvname.csv" -Value $null
     }
 
     # save a record of each created csv for use in a sync. Hashtable
