@@ -105,7 +105,7 @@ foreach($sharename in $SharestoScan){
     }
 
     # save a record of each created csv for use in a sync. Hashtable
-    $csvnamelist = Get-ChildItem -Path "C:\Users\als696\Documents\Temp\" -file | Sort-Object -Property fullName
+    $csvnamelist = Get-ChildItem -Path "$PSScriptRoot\Temp\" -file | Sort-Object -Property fullName
 
     # Configure output Synchronized HashTable with a CSV list
     $Configuration = [hashtable]::Synchronized(@{})
