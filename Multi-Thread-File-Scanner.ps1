@@ -96,7 +96,7 @@ foreach($sharename in $SharestoScan){
     # Create an empty Temp csv for each availible thread to print to.
     $threadList = @()
 
-    for($i = 10; $i -lt $Maxthreads+10; $i++)
+    for($i = 100; $i -lt $Maxthreads+100; $i++)
     {
         $threadList += "$i"
     }
@@ -200,12 +200,24 @@ foreach($sharename in $SharestoScan){
     $initialJobs = $jobs.Runspace.IsCompleted | Where-Object {$_ -contains $false}
     # Check for running Jobs and wait until all jobs are reported as complete.
     while ($Jobs.Runspace.IsCompleted -contains $false) {
-    $jobsremaining = $jobs.Runspace.IsCompleted | Where-Object {$_ -contains $false}
-    "Scan Still in progress..."+[math]::Round((($initialJobs.count-$jobsremaining.count)/$initialJobs.count)*100)+"% Complete."|Write-Host
-    Start-Sleep -Seconds 1
+        $jobsremaining = $jobs.Runspace.IsCompleted | Where-Object {$_ -contains $false}
+        "Scan Still in progress..."+[math]::Round((($initialJobs.count-$jobsremaining.count)/$initialJobs.count)*100)+"% Complete. with "+$jobsremaining.count+ " remaining"|Write-Host
+        Start-Sleep -Seconds 1
     }
     "Wrapping up..." |Write-Host
-    Start-Sleep -Seconds 10
+
+    $check = 0
+    while($check -eq 0){
+        $check = 1
+        foreach($Path in $Configuration.CreatedFiles = $csvnamelist.fullname){
+            Try{
+                Get-Content -Path $Path | Out-Null
+            }
+            Catch{
+                $check = 0
+            }
+        }
+    }
 
     #------------------------------------------------------------
     #------------------------Debugging Tools---------------------
